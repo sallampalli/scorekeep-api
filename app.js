@@ -7,11 +7,14 @@ var express = require('express')
   , routes = require('./routes')
   , user = require('./routes/user')
   , http = require('http')
-  , path = require('path');
+  , path = require('path')
+  , mysql = require('mysql');
+
+  debugger;
 
 var app = express();
 
-app.configure(function(){
+app.configure(function () {
   app.set('port', process.env.PORT || 3000);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
@@ -21,16 +24,33 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
-
+  // connecting database
+app.use(function(req, res, next) {
+  res.locals.connection = mysql.createConnection({
+		host     : 'appsdb.cnpyedxsumgn.us-east-2.rds.amazonaws.com',
+		user     : 'appuser',
+		password : 'appuserpass',
+    database : 'appsdb',
+    port: 3306
+  });
+  res.locals.connect(function(error) {
+    if(error){
+      console.error('please check your db connection'+error.stack);
+      return;
+    }
+    console.log('connection successfull'+res.locals.threadId);
+  });
+	next();
+});
 });
 
-app.configure('development', function(){
+app.configure('development', function () {
   app.use(express.errorHandler());
 });
 
 app.get('/', routes.index);
 app.get('/users', user.list);
 
-http.createServer(app).listen(app.get('port'), function(){
+http.createServer(app).listen(app.get('port'), function () {
   console.log("Express server listening on port " + app.get('port'));
 });
