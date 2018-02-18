@@ -1,4 +1,3 @@
-
 /**
  * Module dependencies.
  */
@@ -6,11 +5,10 @@
 var express = require('express')
   , routes = require('./routes')
   , user = require('./routes/user')
+  , players = require('./routes/players')
   , http = require('http')
   , path = require('path')
   , mysql = require('mysql');
-
-  debugger;
 
 var app = express();
 
@@ -24,25 +22,25 @@ app.configure(function () {
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
-  // connecting database
-app.use(function(req, res, next) {
-  res.locals.connection = mysql.createConnection({
-		host     : 'appsdb.cnpyedxsumgn.us-east-2.rds.amazonaws.com',
-		user     : 'appuser',
-		password : 'appuserpass',
-    database : 'appsdb',
-    port: 3306
-  });
-  res.locals.connect(function(error) {
-    if(error){
-      console.error('please check your db connection'+error.stack);
-      return;
-    }
-    console.log('connection successfull'+res.locals.threadId);
-  });
-	next();
+
 });
+
+var connection = mysql.createConnection({
+  host: 'appsdb.cnpyedxsumgn.us-east-2.rds.amazonaws.com',
+  port: 3306,
+  user: 'appuser',
+  password: 'appuserpass',
+  database: 'appsdb'
 });
+
+connection.connect();
+
+app.get('/players', function(req, res){
+  connection.query('SELECT * from PLAYER', function (err, results, fields) {
+    var response = JSON.stringify({response: results});
+    return res.send(response);
+  });
+})
 
 app.configure('development', function () {
   app.use(express.errorHandler());
